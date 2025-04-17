@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Interactive Fade Reveal Map</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    #container {
+      position: relative;
+      width: 1024px;
+      height: 768px;
+    }
+    #topMap, #bottomMap, #maskCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    #maskCanvas {
+      z-index: 3;
+    }
+    #topMap {
+      z-index: 2;
+      pointer-events: none;
+    }
+    #bottomMap {
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <img id="bottomMap" src="IMG_0489.PNG" alt="Bottom Map">
+    <canvas id="maskCanvas"></canvas>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("maskCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const container = document.getElementById("container");
+    canvas.width = container.offsetWidth;
+    canvas.height = container.offsetHeight;
+
+    const topImage = new Image();
+    topImage.src = "New map (1).jpg";
+
+    topImage.onload = () => {
+      drawMaskedImage();
+    };
+
+    let revealPoints = [];
+
+    function drawMaskedImage() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const tempCanvas = document.createElement("canvas");
+      tempCanvas.width = canvas.width;
+      tempCanvas.height = canvas.height;
+      const tempCtx = tempCanvas.getContext("2d");
+
+      tempCtx.drawImage(topImage, 0, 0, canvas.width, canvas.height);
+
+      revealPoints.forEach(p => {
+        const gradient = tempCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 60);
+        gradient.addColorStop(0, 'rgba(0,0,0,1)');
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+
+        tempCtx.globalCompositeOperation = 'destination-out';
+        tempCtx.fillStyle = gradient;
+        tempCtx.beginPath();
+        tempCtx.arc(p.x, p.y, 60, 0, Math.PI * 2);
+        tempCtx.fill();
+      });
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(tempCanvas, 0, 0);
+    }
+
+    canvas.addEventListener("mousemove", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      revealPoints.push({ x, y });
+      drawMaskedImage();
+    });
+  </script>
+</body>
+</html>
